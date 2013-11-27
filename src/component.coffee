@@ -39,8 +39,6 @@ Ember.AddeparMixins.ResizeHandlerMixin,
 
   enableContentSelection: no
 
-  selection: []
-
   # specify the view class to use for rendering the table rows
   tableRowViewClass: 'Ember.Table.TableRow'
 
