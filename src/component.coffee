@@ -36,8 +36,6 @@ Ember.AddeparMixins.ResizeHandlerMixin,
 
   enableColumnReorder: yes
 
-  selection: null
-
   # specify the view class to use for rendering the table rows
   tableRowViewClass: 'Ember.Table.TableRow'
 
@@ -346,10 +344,6 @@ Ember.AddeparMixins.ResizeHandlerMixin,
   ##############################################################################
   # selection
   ##############################################################################
-  click: (event) ->
-    row = @getRowForEvent event
-    return unless row
-    @set 'selection', row.get('content')
 
   getRowForEvent: (event) ->
     $rowView = $(event.target).parents('.ember-table-table-row')
