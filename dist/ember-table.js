@@ -406,7 +406,7 @@ Ember.AddeparMixins.SelectionMixin = Ember.Mixin.create({
       for (var i = minIndex; i <= maxIndex; i += 1) {
         this.addSelected(this.get('content').objectAt(i));
       }
-    } 
+    }
 
     // Save index of click in row without shift (simple click) or first click
     if (!ev.shiftKey || this.get('baseSelectedIndex') === undefined) {
@@ -416,7 +416,16 @@ Ember.AddeparMixins.SelectionMixin = Ember.Mixin.create({
       this.set('lastIndecClickShift', rowIndex);
     }
 
-    this.addSelected(row);
+    if ((ev.ctrlKey || ev.metaKey) && this.get('selection').contains(row)) {
+      // If ctrl or command, and row is already selected, unselect row.
+      this.get('selection').removeObject(row);
+      // If there is no more selected rows
+      if (this.get('selection.length') === 0) {
+        this.set('baseSelectedIndex', undefined);
+      }
+    } else {
+      this.addSelected(row);
+    }
   },
   click: function (ev) {
     var row = this.getRowForEvent(ev);
