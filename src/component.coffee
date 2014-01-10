@@ -5,7 +5,7 @@
 ###
 Ember.Table.EmberTableComponent =
 Ember.Component.extend Ember.AddeparMixins.StyleBindingsMixin,
-Ember.AddeparMixins.ResizeHandlerMixin,
+Ember.AddeparMixins.ResizeHandlerMixin, Ember.AddeparMixins.SelectionMixin,
   layoutName:   'components/ember-table'
   classNames:     ['ember-table-tables-container']
   classNameBindings: ['enableContentSelection:ember-table-content-selectable']
