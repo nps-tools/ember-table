@@ -820,19 +820,38 @@ Ember.AddeparMixins = Ember.AddeparMixins || Ember.Namespace.create();
 Ember.AddeparMixins.SelectionMixin = Ember.Mixin.create({
   selection: [],
   addSelected: function (row) {
-    if (!this.get('selection').contains(row)) {
+    var selection = this.get('selection');
+    if (!selection.contains(row)) {
       row.set('isSelected', true);
-      this.get('selection').pushObject(row);
+      selection.pushObject(row);
     }
   },
+  addSelectedRows: function (rows) {
+    var selection = this.get('selection');
+    rows.forEach(function (row) {
+      if (!selection.contains(row)) {
+        row.set('isSelected', true);
+        selection.pushObject(row);
+      }
+    });
+  },
+  removeSelected: function (row) {
+    var selection = this.get('selection');
+    selection.removeObject(row);
+    row.set('isSelected', false);
+  },
   selectAll: function () {
-    this.get('selection').clear();
+    var selection = this.get('selection');
+    selection.clear();
     // needs to be checked because content might be either regular array or array proxy
     var content = (Array.isArray(this.get('content'))) ? this.get('content') : this.get('content.content');
     content.forEach(function (row) {
       row.set('isSelected', true);
     });
-    this.get('selection').pushObjects(content);
+    selection.pushObjects(content);
+    
+    // Trigger selectedRowsDidChange
+    this.sendAction('selectedRowsDidChange', selection);
   },
   clearSelection: function () {
     this.get('selection').forEach(function (row) {
@@ -864,15 +883,16 @@ Ember.AddeparMixins.SelectionMixin = Ember.Mixin.create({
     if (this.get('selection').contains(nextRow)) {
       //Remove last selected row.
       var rowToRemove = this.get('content').objectAt(endPoint);
-      rowToRemove.set('isSelected', false);
-      this.get('selection').removeObject(rowToRemove);
+      this.removeSelected(rowToRemove);
     } else {
       this.addSelected(nextRow);
-      nextRow.set('isSelected', true);
     }
 
     this.set('baseSelectedIndex', nextIndex);
     this.set('lastIndecClickShift', undefined);
+
+    // Trigger selectedRowsDidChange
+    this.sendAction('selectedRowsDidChange', this.get('selection'));
   },
   handleSelection: function (ev, row) {
 
@@ -893,9 +913,11 @@ Ember.AddeparMixins.SelectionMixin = Ember.Mixin.create({
       var minIndex = Math.min(this.get('baseSelectedIndex'), rowIndex),
         maxIndex = Math.max(this.get('baseSelectedIndex'), rowIndex);
       this.clearSelection();
+      var rowsToSelect = [];
       for (var i = minIndex; i <= maxIndex; i += 1) {
-        this.addSelected(this.get('content').objectAt(i));
+        rowsToSelect.pushObject(this.get('content').objectAt(i));
       }
+      this.addSelectedRows(rowsToSelect);
     }
 
     // Save index of click in row without shift (simple click) or first click
@@ -908,8 +930,7 @@ Ember.AddeparMixins.SelectionMixin = Ember.Mixin.create({
 
     if ((ev.ctrlKey || ev.metaKey) && this.get('selection').contains(row)) {
       // If ctrl or command, and row is already selected, unselect row.
-      this.get('selection').removeObject(row);
-      row.set('isSelected', true);
+      this.removeSelected(row);
       // If there is no more selected rows
       if (this.get('selection.length') === 0) {
         this.set('baseSelectedIndex', undefined);
@@ -917,18 +938,23 @@ Ember.AddeparMixins.SelectionMixin = Ember.Mixin.create({
     } else {
       this.addSelected(row);
     }
+
+    // Trigger selectedRowsDidChange
+    this.sendAction('selectedRowsDidChange', this.get('selection'));
   },
   mouseDown: function (ev) {
     var row = this.getRowForEvent(ev);
     if (row !== void 0 && !row.get('content').get('isSelected')) {
+      this.set('preventClick', true);
       return this.handleSelection(ev, row.get('content'));
     }
   },
   click: function (ev) {
     var row = this.getRowForEvent(ev);
-    if (row !== void 0 && row.get('content').get('isSelected')) {
+    if (row !== void 0 && row.get('content').get('isSelected') && !this.get('preventClick')) {
       return this.handleSelection(ev, row.get('content'));
     }
+    this.set('preventClick', false);
   },
   keyDown: function (ev) {
     // disable default scrolling strategy of the browser
